@@ -1,0 +1,25 @@
+{
+  "name": "web_hotel",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "morgan": "^1.10.0",
+    "msnodesqlv8": "^3.1.0",
+    "mssql": "^9.1.1",
+    "rest-mssql-nodejs": "^1.0.10",
+    "tedious": "^16.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}
