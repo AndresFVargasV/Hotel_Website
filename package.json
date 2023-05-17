@@ -4,8 +4,8 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "start": "node source_page/app.js",
+    "dev": "nodemon source_page/app.js"
   },
   "keywords": [],
   "author": "",
