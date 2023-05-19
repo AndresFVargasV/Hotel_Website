@@ -104,9 +104,8 @@ async function consultarCamasDisponibles(fechaInicio, fechaFin, tipoHabitacion, 
       console.error(error);
       throw new Error('Error en la consulta de camas disponibles');
     }
-  }
-  
-  // Fin de la función Consultar camas disponibles
+  }  
+// Fin de la función Consultar camas disponibles
 
 router.get('/habitaciones-compartidas-disponibles', async (req, res) => {
     try {
@@ -128,7 +127,6 @@ router.get('/habitaciones-compartidas-disponibles', async (req, res) => {
       `);
   
       res.json(result.recordset);
-      res.render('customers', { habitaciones: result.recordset });
     } catch (error) {
       console.error('Error al ejecutar la consulta:', error);
       res.status(500).send('Error en el servidor');
