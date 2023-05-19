@@ -1,41 +1,37 @@
 const express = require('express');
 const app = express();
 const path = require('path');
-const { pool, dbConnect, verificarDisponibilidad, hacerReserva } = require('./config');
 const morgan = require('morgan');
+const customerRoutes = require('./routes/customer');
+const cors = require('cors');
 
 
 
 //settings
 app.set('port', process.env.PORT || 3000);
-app.set('wiew engine', 'ejs');
+app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 
 //middlewares
 app.use(morgan('dev'));
+app.use(express.urlencoded({extended: false}));
 
 
 //routes
+app.use(cors());
+app.use('/', customerRoutes);
 
-app.use(express.json());
 
-// Ruta para manejar la solicitud de reserva
-app.post('/ruta-de-reserva', (req, res) => {
-  const reservaCliente = req.body;
-  // Aquí puedes procesar los datos y hacer la reserva en la base de datos
-  // ...
-  hacerReserva(reservaCliente);
 
-  // Enviar una respuesta al cliente
-  res.send('Reserva realizada exitosamente.');
-});
-// Fin de los datos de una reserva del cliente
 
+
+//static files
+app.use(express.static(path.join(__dirname, 'public')));
 
 
 //puerto escuchando
-const port = 5500;
+const port = 3000;
 app.listen(app.get('port'), () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
 });

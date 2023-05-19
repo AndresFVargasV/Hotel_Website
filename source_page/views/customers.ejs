@@ -1,0 +1,86 @@
+<%- include('partials/_headers') %>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-7">
+            
+        </div>
+        <div class="col-md-10">
+            <h2>Formulario de reserva</h2>
+            <form action="/add-reservas" method="post">
+
+
+                <div>
+                  <label for="codigoReserva">Código de reserva:</label>
+                  <input type="text" id="codigoReserva" name="codigoReserva" required>
+                </div>
+                
+                <div>
+                  <label for="idHabitacion">ID de habitación:</label>
+                  <input type="number" id="idHabitacion" name="idHabitacion" required>
+                </div>
+                
+                <div>
+                  <label for="docCliente">Documento del cliente:</label>
+                  <input type="text" id="docCliente" name="docCliente" required>
+                </div>
+                
+                <div>
+                  <label for="fechaInicio">Fecha de inicio:</label>
+                  <input type="datetime-local" id="fechaInicio" name="fechaInicio" required>
+                </div>
+                
+                <div>
+                  <label for="fechaFin">Fecha de fin:</label>
+                  <input type="datetime-local" id="fechaFin" name="fechaFin" required>
+                </div>
+                
+                <div>
+                  <label for="numPersonas">Número de personas:</label>
+                  <input type="number" id="numPersonas" name="numPersonas" required>
+                </div>
+                
+                <div>
+                  <label for="desayuno">Desayuno:</label>
+                  <input type="checkbox" id="desayuno" name="desayuno">
+                </div>
+                
+                <div>
+                  <label for="almuerzo">Almuerzo:</label>
+                  <input type="checkbox" id="almuerzo" name="almuerzo">
+                </div>
+                
+                <div>
+                  <label for="cena">Cena:</label>
+                  <input type="checkbox" id="cena" name="cena">
+                </div>
+                
+                <div>
+                  <label for="transporte">Transporte:</label>
+                  <input type="checkbox" id="transporte" name="transporte">
+                </div>
+                
+                <div>
+                  <label for="parqueadero">Parqueadero:</label>
+                  <input type="checkbox" id="parqueadero" name="parqueadero">
+                </div>
+                
+                <div>
+                  <label for="lavanderia">Lavandería:</label>
+                  <input type="checkbox" id="lavanderia" name="lavanderia">
+                </div>
+                
+                <div>
+                  <label for="descripcion">Descripción:</label>
+                  <textarea id="descripcion" name="descripcion"></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Guardar</button>
+              </form>
+           
+        </div>
+    </div>
+</div>
+  
+
+<%- include('partials/_footer') %>
