@@ -7,21 +7,43 @@ router.get('/add-reservas', async (req, res) => {
   res.render('customers');
 });
 
+async function generarValorUnico() {
+  const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let valorUnico = '';
+  
+  for (let i = 0; i < 10; i++) {
+    const indice = Math.floor(Math.random() * caracteres.length);
+    valorUnico += caracteres.charAt(indice);
+  }
+  
+  return valorUnico;
+}
+
 // Ruta para hacer una reserva
-async function addReservas(reservaCliente) {
+async function addReservas(reservaCliente,id_habitacion) {
   try {
     // Verificar disponibilidad de la habitación
 
     // Insertar la reserva en la base de datos
     await sql.connect(config);
     const query = `
-    INSERT INTO reservas (codigo_reserva, id_habitacion, id_cliente, fecha_inicio, fecha_fin, num_personas, desayuno, almuerzo, cena, transporte, parqueadero, lavanderia, descripcion, guia)
-    VALUES (@codigoReserva, @idHabitacion, @idCliente, @fechaInicio, @fechaFin, @numPersonas, @desayuno, @almuerzo, @cena, @transporte, @parqueadero, @lavanderia, @descripcion, @guia)
+      -- INSERT en la tabla 'reservas'
+      INSERT INTO reservas (codigo_reserva, id_cliente, fecha_inicio, fecha_fin, num_personas, desayuno, almuerzo, cena, transporte, parqueadero, lavanderia, descripcion, guia)
+      VALUES (@codigoReserva, @idCliente, @fechaInicio, @fechaFin, @numPersonas, @desayuno, @almuerzo, @cena, @transporte, @parqueadero, @lavanderia, @descripcion, @guia);
+
+      -- Obtener el ID de la reserva recién insertada
+      DECLARE @idReserva INT;
+      SET @idReserva = SCOPE_IDENTITY();
+
+      -- INSERT en la tabla 'reservas_habitaciones'
+      INSERT INTO reservas_habitaciones (id_reserva, id_habitacion)
+      VALUES (@idReserva, @idHabitacion);
     `;
     const pool = await sql.connect(config);
     const request = pool.request();
-    request.input('codigoReserva', sql.VarChar(100), reservaCliente.codigoReserva);
-    request.input('idHabitacion', sql.Int, reservaCliente.idHabitacion);
+    const codigo= await generarValorUnico();
+    request.input('codigoReserva', sql.VarChar(100), codigo);
+    request.input('idHabitacion', sql.Int, id_habitacion);
     request.input('idCliente', sql.VarChar(50), reservaCliente.docCliente);
     request.input('fechaInicio', sql.DateTime, reservaCliente.fechaInicio);
     request.input('fechaFin', sql.DateTime, reservaCliente.fechaFin);
@@ -35,10 +57,10 @@ async function addReservas(reservaCliente) {
     request.input('descripcion', sql.Text, reservaCliente.descripcion);
     request.input('guia', sql.Bit, reservaCliente.guia ? 1 : 0);
     await request.query(query);
+    
+    //console.log('Reserva realizada exitosamente.');
 
-    console.log('Reserva realizada exitosamente.');
-
-    return { message: 'Reserva realizada exitosamente.' };
+    return codigo
   } catch (error) {
     console.log('Error al hacer la reserva:', error);
     throw new Error('Error al hacer la reserva');
@@ -46,31 +68,37 @@ async function addReservas(reservaCliente) {
     sql.close();
   }
 }
+// Fin de ruta de hacer reserva
 
 router.post('/add-reservas', async (req, res) => {
   try {
     console.log(req.body);
     const reservaCliente = req.body;
-    console.log('Valores reserva en body: ',reservaCliente);
+   
     const tipo = req.body.tipo;
-
-    if(tipo==="Ordinario"){
+    
+    if(tipo==="ordinaria"){
     
     const disponibilidad = await consultarCamasDisponibles(reservaCliente);
-    console.log('Valores reserva: ',disponibilidad);
-    if (disponibilidad === 1) {
-      throw new Error('No hay disponibilidad en las fechas seleccionadas.');
-    } else  {
 
-      const result = await addReservas(req.body);
+    if (disponibilidad.recordset.length===0) {
+       res.status(404).send(`No hay habitaciones disponibles en el rango de fechas seleccionadas`)
+    } else {
+      const id = disponibilidad.recordset[0].id;
+      console.log('Valido')
+      const result = await addReservas(req.body,id);
+
+      if (result){
+        res.status(200).send(`Reserva realizada exitosamente codigo de reserva # ${result}`)
+      }
     }
 
-    }else if(tipo==="Compartido"){
+    }else if(tipo==="compartido"){
     
     }
     
 
-    res.json(result);
+    //res.json(result);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al hacer la reserva' });
@@ -83,6 +111,7 @@ router.post('/add-reservas', async (req, res) => {
 // Ruta para consultar camas disponibles
 async function consultarCamasDisponibles(reservaCliente) {
     try {
+
       await sql.connect(config);
   
       const query = `
@@ -100,18 +129,19 @@ async function consultarCamasDisponibles(reservaCliente) {
             OR (r.fecha_inicio <= @fechaInicio AND r.fecha_fin >= @fechaFin)
         )
     )`;
-  
-      const request = new sql.Request();
-  
-      request.input('tipoHabitacion', sql.VarChar, reservaCliente.tipo);
-      request.input('tipoCama', sql.VarChar, reservaCliente.acomdacion);
+        
+      const pool = await sql.connect(config);
+      const request = pool.request();
+
+      request.input('tipoHabitacion', sql.VarChar(50), reservaCliente.tipo);
+      request.input('tipoCama', sql.VarChar(50), reservaCliente.acomodacion);
       request.input('fechaInicio', sql.DateTime, reservaCliente.fechaInicio);
       request.input('fechaFin', sql.DateTime, reservaCliente.fechaFin);
   
       const result = await request.query(query);
-      console.log('Valores reserva: ',result);
+
       await sql.close();
-  
+      
       return result
     } catch (error) {
       console.error(error);
@@ -119,32 +149,6 @@ async function consultarCamasDisponibles(reservaCliente) {
     }
   }  
 // Fin de la función Consultar camas disponibles
-
-router.get('/habitaciones-compartidas-disponibles', async (req, res) => {
-    try {
-      const pool = await sql.connect(config);
-      const result = await pool.request().query(`
-        SELECT h.numero_habitacion, h.camas_disponibles
-        FROM habitaciones h
-        WHERE h.tipo = 'compartido'
-        AND NOT EXISTS (
-          SELECT 1
-          FROM reservas r
-          WHERE r.id_habitacion = h.id
-          AND (
-            (r.fecha_inicio <= '2023-05-18' AND r.fecha_fin >= '2023-05-18')
-            OR (r.fecha_inicio <= '2023-05-20' AND r.fecha_fin >= '2023-05-20')
-            OR (r.fecha_inicio >= '2023-05-18' AND r.fecha_fin <= '2023-05-20')
-          )
-        )
-      `);
-  
-      res.json(result.recordset);
-    } catch (error) {
-      console.error('Error al ejecutar la consulta:', error);
-      res.status(500).send('Error en el servidor');
-    }
-  });
 
 
 // Ruta para hacer una reserva de habitaciones compartidas para un grupo de personas
@@ -156,20 +160,21 @@ router.get('/reservar-habitaciones-compartidas', async (req, res) => {
   
       // Obtener las habitaciones compartidas disponibles
       const result = await pool.request().query(`
-        SELECT h.id, h.numero_habitacion, h.camas_disponibles
-        FROM habitaciones h
-        WHERE h.tipo = 'compartido'
-        AND NOT EXISTS (
-          SELECT 1
-          FROM reservas r
-          WHERE r.id_habitacion = h.id
-          AND (
-            (r.fecha_inicio <= '2023-05-18' AND r.fecha_fin >= '2023-05-18')
-            OR (r.fecha_inicio <= '2023-05-20' AND r.fecha_fin >= '2023-05-20')
-            OR (r.fecha_inicio >= '2023-05-18' AND r.fecha_fin <= '2023-05-20')
-          )
+      SELECT TOP 1 h.id, h.numero_habitacion, h.tipo, h.acomodacion
+      FROM habitaciones h
+      WHERE h.tipo = @tipoHabitacion
+      AND h.acomodacion = @tipoCama
+      AND h.id NOT IN (
+        SELECT rh.id_habitacion
+        FROM reservas_habitaciones rh
+        INNER JOIN reservas r ON rh.id_reserva = r.id_reserva
+        WHERE (
+            (r.fecha_inicio >= @fechaInicio AND r.fecha_inicio < @fechaFin)
+            OR (r.fecha_fin > @fechaInicio AND r.fecha_fin <= @fechaFin)
+            OR (r.fecha_inicio <= @fechaInicio AND r.fecha_fin >= @fechaFin)
         )
-      `);
+      )`);
+      
   
       const habitacionesDisponibles = result.recordset;
   
