@@ -11,10 +11,6 @@ router.get('/add-reservas', async (req, res) => {
 async function addReservas(reservaCliente) {
   try {
     // Verificar disponibilidad de la habitación
-    const disponibilidad = await consultarCamasDisponibles(reservaCliente.fecha_inicio, reservaCliente.fecha_fin, reservaCliente.tipoHabitacion, reservaCliente.tipoCama);
-    if (disponibilidad === 1) {
-      throw new Error('No hay disponibilidad en las fechas seleccionadas.');
-    }
 
     // Insertar la reserva en la base de datos
     await sql.connect(config);
@@ -54,8 +50,25 @@ async function addReservas(reservaCliente) {
 router.post('/add-reservas', async (req, res) => {
   try {
     console.log(req.body);
+    const reservaCliente = req.body;
+    console.log('Valores reserva en body: ',reservaCliente);
+    const tipo = req.body.tipo;
 
-    const result = await addReservas(req.body);
+    if(tipo==="Ordinario"){
+    
+    const disponibilidad = await consultarCamasDisponibles(reservaCliente);
+    console.log('Valores reserva: ',disponibilidad);
+    if (disponibilidad === 1) {
+      throw new Error('No hay disponibilidad en las fechas seleccionadas.');
+    } else  {
+
+      const result = await addReservas(req.body);
+    }
+
+    }else if(tipo==="Compartido"){
+    
+    }
+    
 
     res.json(result);
   } catch (error) {
@@ -68,38 +81,38 @@ router.post('/add-reservas', async (req, res) => {
 
 
 // Ruta para consultar camas disponibles
-async function consultarCamasDisponibles(fechaInicio, fechaFin, tipoHabitacion, tipoCama) {
+async function consultarCamasDisponibles(reservaCliente) {
     try {
       await sql.connect(config);
   
       const query = `
-        SELECT TOP 1 h.id, h.numero_habitacion, h.tipo, h.acomodacion
-        FROM habitaciones h
-        WHERE h.tipo = @tipoHabitacion
-            AND h.acomodacion = @tipoCama
-            AND h.camas_disponibles > (
-                SELECT COUNT(r.id_reserva)
-                FROM reservas r
-                WHERE r.id_habitacion = h.id
-                    AND (
-                        (r.fecha_inicio >= @fechaInicio AND r.fecha_inicio < @fechaFin)
-                        OR (r.fecha_fin > @fechaInicio AND r.fecha_fin <= @fechaFin)
-                        OR (r.fecha_inicio <= @fechaInicio AND r.fecha_fin >= @fechaFin)
-                    )
-            )`;
+      SELECT TOP 1 h.id, h.numero_habitacion, h.tipo, h.acomodacion
+      FROM habitaciones h
+      WHERE h.tipo = @tipoHabitacion
+      AND h.acomodacion = @tipoCama
+      AND h.id NOT IN (
+        SELECT rh.id_habitacion
+        FROM reservas_habitaciones rh
+        INNER JOIN reservas r ON rh.id_reserva = r.id_reserva
+        WHERE (
+            (r.fecha_inicio >= @fechaInicio AND r.fecha_inicio < @fechaFin)
+            OR (r.fecha_fin > @fechaInicio AND r.fecha_fin <= @fechaFin)
+            OR (r.fecha_inicio <= @fechaInicio AND r.fecha_fin >= @fechaFin)
+        )
+    )`;
   
       const request = new sql.Request();
   
-      request.input('tipoHabitacion', sql.VarChar, tipoHabitacion);
-      request.input('tipoCama', sql.VarChar, tipoCama);
-      request.input('fechaInicio', sql.DateTime, fechaInicio);
-      request.input('fechaFin', sql.DateTime, fechaFin);
+      request.input('tipoHabitacion', sql.VarChar, reservaCliente.tipo);
+      request.input('tipoCama', sql.VarChar, reservaCliente.acomdacion);
+      request.input('fechaInicio', sql.DateTime, reservaCliente.fechaInicio);
+      request.input('fechaFin', sql.DateTime, reservaCliente.fechaFin);
   
       const result = await request.query(query);
-  
+      console.log('Valores reserva: ',result);
       await sql.close();
   
-      return result.recordset.length > 0 ? 1 : 0;
+      return result
     } catch (error) {
       console.error(error);
       throw new Error('Error en la consulta de camas disponibles');

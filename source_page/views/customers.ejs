@@ -9,32 +9,22 @@
             <h2>Formulario de reserva</h2>
             <form action="/add-reservas" method="post">
 
-
-                <div>
-                  <label for="codigoReserva">Código de reserva:</label>
-                  <input type="text" id="codigoReserva" name="codigoReserva" required>
-                </div>
-                
-                <div>
-                  <label for="idHabitacion">ID de habitación:</label>
-                  <input type="number" id="idHabitacion" name="idHabitacion" required>
-                </div>
                 
                 <div>
                   <label for="docCliente">Documento del cliente:</label>
                   <input type="text" id="docCliente" name="docCliente" required>
                 </div>
 
+                <label for="Tipo">Tipo de habitación</label>
                 <select name="tipo" id="tipo">
-                    <label for="tipo">Tipo de habitación</label>
-                    <option value="Compartido">Sencilla</option>
-                    <option value="Ordinario">Doble</option>
+                    <option value="Compartido">Compartida</option>
+                    <option value="Ordinario">Ordinaria</option>
                 </select>
 
+                <label for="acomodacion">Acomodacion de las camas</label>
                 <select name="acomodacion" id="acomodacion">
-                    <label for="acomodacion">Acomodacion de las camas</label>
-                    <option value="Doble">Sencilla</option>
-                    <option value="Sencilla">Doble</option>
+                    <option value="Doble">Doble</option>
+                    <option value="Sencilla">Sencilla</option>
                 </select>
                 
                 <div>
