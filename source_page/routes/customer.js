@@ -171,6 +171,61 @@ async function consultarCamasDisponibles(reservaCliente) {
 // Fin de la función consultar camas disponibles si el tipo de habitación es ordinaria
 
 
+//  Funcion para consultar si hay servicios disponibles en el rango de fechas seleccionadas
+const sql = require('mssql');
+
+const config = {
+  user: 'tu_usuario',
+  password: 'tu_contraseña',
+  server: 'tu_servidor',
+  database: 'tu_base_de_datos',
+};
+
+async function reservarCupos(fechaInicio, fechaFin, tipoServicio) {
+  try {
+    await sql.connect(config);
+
+    const transaction = new sql.Transaction();
+    await transaction.begin();
+
+    const request = new sql.Request(transaction);
+    
+    // Verificar si hay cupos disponibles para todas las fechas
+    const query = `
+      SELECT 1
+      FROM CuposDisponibles
+      WHERE Fecha >= @FechaInicio AND Fecha <= @FechaFin
+      AND [${tipoServicio}] > 0
+    `;
+    const result = await request.query(query, { FechaInicio: fechaInicio, FechaFin: fechaFin });
+
+    if (result.recordset.length === 0) {
+      throw new Error('No hay cupos disponibles para todas las fechas.');
+    }
+
+    // Actualizar los cupos disponibles para cada fecha
+    const updateQuery = `
+      UPDATE CuposDisponibles
+      SET [${tipoServicio}] = [${tipoServicio}] - 1
+      WHERE Fecha >= @FechaInicio AND Fecha <= @FechaFin
+      AND [${tipoServicio}] > 0
+    `;
+    await request.query(updateQuery, { FechaInicio: fechaInicio, FechaFin: fechaFin });
+
+    await transaction.commit();
+    console.log('Reserva exitosa.');
+  } catch (error) {
+    if (transaction) {
+      await transaction.rollback();
+    }
+    console.error('No se pudo realizar la reserva:', error.message);
+  } finally {
+    sql.close();
+  }
+}
+// Fin de la función consultar si hay servicios disponibles en el rango de fechas seleccionadas
+
+
 // Ruta para hacer una reserva de habitaciones compartidas para un grupo de personas
 async function reservarHabitacionesCompartidas(reservaCliente) {
 
