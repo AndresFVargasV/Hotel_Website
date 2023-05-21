@@ -120,7 +120,7 @@ async function consultarCamasDisponibles(reservaCliente) {
       const query = `
         SELECT top 1 h.id, h.numero_habitacion, h.tipo, h.acomodacion, h.camas_disponibles, h.price, h.descripcion
         FROM habitaciones h
-        WHERE h.tipo = @tipoHabitacion 
+        WHERE h.tipo = 'ordinaria' 
         AND h.acomodacion = @tipoCama
         AND h.id NOT IN (
         SELECT r.id_habitacion
@@ -131,7 +131,6 @@ async function consultarCamasDisponibles(reservaCliente) {
       const pool = await sql.connect(config);
       const request = pool.request();
 
-      request.input('tipoHabitacion', sql.VarChar(50), reservaCliente.tipo);
       request.input('tipoCama', sql.VarChar(50), reservaCliente.acomodacion);
       request.input('fechaInicio', sql.DateTime, reservaCliente.fechaInicio);
       request.input('fechaFin', sql.DateTime, reservaCliente.fechaFin);
