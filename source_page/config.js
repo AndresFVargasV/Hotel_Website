@@ -6,7 +6,7 @@ const config = {
   user: 'andres-sa',
   password: '123456789db*',
   server: 'andres-databases.database.windows.net',
-  database: 'bd_hotel',
+  database: 'hotel',
 };
 
 // Llamada a la conexión de la base de datos
