@@ -224,6 +224,8 @@ async function obtenerHabitacionesCompartidas() {
 }
 // Fin de la función para obtener los IDs de las habitaciones compartidas
 
+
+// Funcion para reservar habitaciones compartidas
 async function reservaHabitaciones(reservaCliente, idsHabitaciones, fechaInicio, fechaFin) {
   try {
 
@@ -285,11 +287,11 @@ async function reservaHabitaciones(reservaCliente, idsHabitaciones, fechaInicio,
     throw error;
   }
 }
+// Fin de la función para reservar habitaciones compartidas
 
 
 
-
-
+// Función para insertar una nueva reserva compartida
 async function insertarReservaCompartida(reservaCliente, idHabitacion) {
   try {
     // Generar un valor único para el código de reserva
@@ -339,6 +341,7 @@ async function insertarReservaCompartida(reservaCliente, idHabitacion) {
     throw error;
   }
 }
+// Fin de la función para insertar una nueva reserva compartida
 
 
 // Exportamos este modulo para usarlo en app.js
