@@ -118,15 +118,15 @@ async function consultarCamasDisponibles(reservaCliente) {
       await sql.connect(config);
   
       const query = `
-      SELECT top 1 h.id, h.numero_habitacion, h.tipo, h.acomodacion, h.camas_disponibles, h.price, h.descripcion
-      FROM habitaciones h
-      WHERE h.tipo = @tipoHabitacion 
-      AND h.acomodacion = @tipoCama
-      AND h.id NOT IN (
-      SELECT r.id_habitacion
-      FROM reservas r
-      WHERE (r.fecha_inicio <= @fechaFin AND r.fecha_fin >= @fechaInicio)
-      )`;
+        SELECT top 1 h.id, h.numero_habitacion, h.tipo, h.acomodacion, h.camas_disponibles, h.price, h.descripcion
+        FROM habitaciones h
+        WHERE h.tipo = @tipoHabitacion 
+        AND h.acomodacion = @tipoCama
+        AND h.id NOT IN (
+        SELECT r.id_habitacion
+        FROM reservas r
+        WHERE (r.fecha_inicio <= @fechaFin AND r.fecha_fin >= @fechaInicio)
+        )`;
         
       const pool = await sql.connect(config);
       const request = pool.request();
