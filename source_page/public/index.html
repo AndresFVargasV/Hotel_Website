@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Landing Page del Hotel</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="routes\customer.js"></script>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="#car">Inicio</a></li>
+                <li><a href="#hab">Habitaciones</a></li>
+                <li><a href="#resev">Reserva</a></li>
+                <li><a href="#">Contacto</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="carousel" id="car">
+        <div class="slide">
+            <img src="1.png" alt="Imagen 1">
+        </div>
+        <div class="slide">
+            <img src="2.png" alt="Imagen 2">
+        </div>
+        <div class="slide">
+            <img src="3.png" alt="Imagen 3">
+        </div>
+        <div class="slide">
+            <img src="Horizonte del llano (1).png" alt="Imagen 4">
+        </div>
+    </section>
+    <script>
+        // JavaScript para el carrusel de imágenes
+        const slides = document.querySelectorAll('.slide');
+        let currentSlide = 0;
+
+        function showSlide(n) {
+            slides[currentSlide].style.display = 'none';
+            currentSlide = (n + slides.length) % slides.length;
+            slides[currentSlide].style.display = 'block';
+        }
+
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        setInterval(nextSlide, 3000); // Cambiar de imagen cada 3 segundos
+    </script>
+    <section class="reservation-options" id="hab">
+        <div class="reservation-option">
+            <div class="option-image personal" onmouseover="showDetails('personal')" onmouseout="hideDetails('personal')">
+            </div>
+            <h3>Reserva Personal</h3>
+            <div class="option-details personal" id="personal-details">
+                <p>Mayor privacidad y calidad del servicio a un precio más alto.</p>
+            </div>
+        </div>
+        <div class="reservation-option">
+            <div class="option-image shared" onmouseover="showDetails('shared')" onmouseout="hideDetails('shared')"></div>
+            <h3>Reserva Compartida</h3>
+            <div class="option-details shared" id="shared-details">
+                <p>Más económica pero con menor privacidad.</p>
+            </div>
+        </div>
+    </section>
+    <script>
+        function showDetails(option) {
+            const details = document.getElementById(`${option}-details`);
+            details.classList.add('show');
+        }
+
+        function hideDetails(option) {
+            const details = document.getElementById(`${option}-details`);
+            details.classList.remove('show');
+        }
+    </script>
+
+ 
+    
+<section class="reservation-form" id="resev">
+    <h2>Reserva tu habitación</h2>
+    <form action="/add-reservas" method="post">
+      <label for="fechaInicio">Fecha de ida:</label>
+      <input type="date" id="fechaInicio" name="fechaInicio" required>
+  
+      <label for="fechaFin">Fecha de regreso:</label>
+      <input type="date" id="fechaFin" name="fechaFin" required>
+  
+      <label for="habitacion-compartida">Habitación compartida:</label>
+      <select id="tipo" onchange="toggleAccommodationOptions()" name="tipo">
+        <option value="compartida">Compartida</option>
+        <option value="ordinaria">Ordinaria</option>
+      </select>
+      <div id="accommodation-options" style="display: none;">
+        <label for="accommodation-type">Tipo de Acomodación:</label>
+        <select id="acomodacion" name="acomodacion">
+          <option value="double">Doble</option>
+          <option value="single">Simple</option>
+          <option value="king">King</option>
+        </select>
+      </div>
+      <div>
+        <label for="desayuno">Alimentacion:</label>
+        <input type="checkbox" id="desayuno" name="desayuno">
+      </div>
+      
+      <div>
+        <label for="transporte">Transporte:</label>
+        <input type="checkbox" id="transporte" name="transporte">
+      </div>
+      
+      <div>
+        <label for="parqueadero">Parqueadero:</label>
+        <input type="checkbox" id="parqueadero" name="parqueadero">
+      </div>
+      
+      <div>
+        <label for="lavanderia">Lavandería:</label>
+        <input type="checkbox" id="lavanderia" name="lavanderia">
+      </div>
+
+      <div>
+        <label for="guia">Guia:</label>
+        <input type="checkbox" id="guia" name="guia">
+      </div>
+      <input id="consultarBtn" type="submit" value="Consultar Reserva">
+      <label for="numPersonas">Número de personas:</label>
+      <input type="number" id="numPersonas" name="numPersonas" min="1" required>
+  
+      <div id="personas-container"></div>
+  
+      <input type="submit" value="Reservar">
+    </form>
+  </section>
+  <script>
+    
+    // Inicializar el campo de fecha de ida
+    const fechaIdaInput = document.getElementById("fechaInicio");
+    const fechaRegresoInput = document.getElementById("fechaFin");
+  
+    const fechaIdaPicker = flatpickr(fechaIdaInput, {
+      minDate: "today", // Bloquear fechas anteriores a la fecha actual
+      onChange: function (selectedDates) {
+        if (selectedDates.length > 0) {
+          const selectedDate = selectedDates[0];
+          fechaRegresoPicker.set("minDate", selectedDate); // Establecer la fecha mínima para la fecha de regreso
+        }
+      },
+    });
+  
+    // Inicializar el campo de fecha de regreso
+    const fechaRegresoPicker = flatpickr(fechaRegresoInput, {
+      minDate: "today", // Bloquear fechas anteriores a la fecha actual
+    });
+  
+  
+    function toggleAccommodationOptions() {
+        const sharedRoomSelect = document.getElementById("tipo");
+  const accommodationOptions = document.getElementById("accommodation-options");
+
+  if (sharedRoomSelect.value === "compartida") {
+    accommodationOptions.style.display = "none"; // Ocultar las opciones de acomodación
+  } else {
+    accommodationOptions.style.display = "block"; // Mostrar las opciones de acomodación
+  }
+    }
+  </script>
+  <script>
+    // JavaScript para agregar secciones de datos de persona dinámicamente
+    const personasContainer = document.getElementById('personas-container');
+    const numeroPersonasInput = document.getElementById('numPersonas');
+  
+    function agregarDatosPersona() {
+      personasContainer.innerHTML = '';
+      const numeroPersonas = parseInt(numeroPersonasInput.value);
+  
+      for (let i = 0; i < numeroPersonas; i++) {
+        const seccionPersona = document.createElement('div');
+        seccionPersona.classList.add('persona');
+  
+        const numeroPersonaLabel = document.createElement('label');
+        numeroPersonaLabel.textContent = `Persona ${i + 1}:`;
+        const numeroPersonaInput = document.createElement('input');
+        numeroPersonaInput.type = 'hidden';
+        numeroPersonaInput.value = i + 1;
+  
+        const nombreLabel = document.createElement('label');
+        nombreLabel.textContent = 'Nombre:';
+        const nombreInput = document.createElement('input');
+
+        nombreInput.type = 'text';
+  
+        const documentoLabel = document.createElement('label');
+        documentoLabel.textContent = 'Número de documento:';
+        const documentoInput = document.createElement('input');
+        if(i==0){ 
+        documentoInput.setAttribute("name", "docCliente")}
+        documentoInput.type = 'text';
+  
+        const tipoDocumentoLabel = document.createElement('label');
+        tipoDocumentoLabel.textContent = 'Tipo de documento:';
+        const tipoDocumentoInput = document.createElement('select');
+        var c = document.createElement("option");
+        var opciones = ["Cedula de ciudadania", "NIT", "Pasaporte"];
+        opciones.forEach(function(valor) {
+        var opcion = document.createElement("option");
+        opcion.text = valor;
+        tipoDocumentoInput.options.add(opcion);
+        });
+  
+        const correoLabel = document.createElement('label');
+        correoLabel.textContent = 'Correo electrónico:';
+        const correoInput = document.createElement('input');
+        correoInput.type = 'email';
+  
+        seccionPersona.appendChild(numeroPersonaLabel);
+        seccionPersona.appendChild(numeroPersonaInput);
+        seccionPersona.appendChild(nombreLabel);
+        seccionPersona.appendChild(nombreInput);
+        seccionPersona.appendChild(documentoLabel);
+        seccionPersona.appendChild(documentoInput);
+        seccionPersona.appendChild(tipoDocumentoLabel);
+        seccionPersona.appendChild(tipoDocumentoInput);
+        seccionPersona.appendChild(correoLabel);
+        seccionPersona.appendChild(correoInput);
+  
+        personasContainer.appendChild(seccionPersona);
+      }
+    }
+  
+    numeroPersonasInput.addEventListener('input', agregarDatosPersona);
+  </script>
+</body>
+
+</html>

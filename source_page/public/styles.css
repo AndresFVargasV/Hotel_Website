@@ -1,0 +1,245 @@
+/* styles.css */
+
+/* Estilos generales */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #BBB8B2;
+}
+
+/* Estilos de la barra de navegación */
+header {
+    background-color: #50723C;
+    color: #BBB8B2;
+    padding: 20px;
+}
+
+nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+nav ul li {
+    display: inline;
+    margin-right: 10px;
+}
+
+nav ul li a {
+    color: #BBB8B2;
+    text-decoration: none;
+}
+
+
+/* Estilos del carrusel */
+
+.carousel {
+    position: relative;
+    height: 500px;
+    overflow: hidden;
+}
+
+.slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+}
+/* Estilos de la presentacion de las habitaciones */
+.reservation-options {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 40px;
+}
+
+.reservation-option {
+    width: 45%;
+    position: relative;
+}
+
+.option-image {
+    height: 400px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    transition: transform 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+}
+
+.option-image.personal {
+    background-image: url('personal.jpg');
+    /* Cambia la URL por la imagen de reserva personal */
+}
+
+.option-image.shared {
+    background-image: url('shared.jpg');
+    /* Cambia la URL por la imagen de reserva compartida */
+}
+
+.option-image:hover {
+    transform: scale(1.1);
+}
+
+.option-details {
+    display: none;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 20%;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: #FFF;
+    padding: 10px;
+    text-align: center;
+    z-index: 2;
+}
+
+.option-details p {
+    margin-top: 10px;
+}
+
+h3 {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 18px;
+    color: #2E2E3A;
+    position: relative;
+    z-index: 3;
+}
+
+/* Estilos específicos para la reserva personal */
+.option-details.personal {
+    background-color: rgba(79, 121, 54, 0.9);
+}
+
+/* Estilos específicos para la reserva compartida */
+.option-details.shared {
+    background-color: #E3B23C;
+}
+
+/* Mostrar detalles al hacer hover */
+.show {
+    display: block;
+}
+
+/* Estilos del formulario de reserva */
+.reservation-form {
+    margin-top: 20px;
+    text-align: center;
+    background-color: rgba(79, 121, 54, 0.9);
+    background-image: url('Horizonte\ del\ llano\ \(2\).png');
+    color: #FFF;
+    padding: 20px;
+    border-radius: 10px;
+    /* Añade bordes redondeados */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    /* Añade una sombra */
+}
+
+.reservation-form h2 {
+    margin-bottom: 10px;
+}
+
+.reservation-form form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.reservation-form label {
+    margin-top: 10px;
+}
+
+.reservation-form input[type="date"],
+.reservation-form input[type="text"],
+.reservation-form input[type="email"],
+.reservation-form input[type="number"],
+.reservation-form select {
+    width: 300px;
+    padding: 5px;
+    border: 1px solid #BBB8B2;
+    border-radius: 5px;
+    /* Añade bordes redondeados */
+}
+
+.reservation-form input[type="submit"] {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #50723C;
+    color: #FFF;
+    border: none;
+    cursor: pointer;
+    border-radius: 25px;
+    box-shadow: 0 0 15px #2E2E3A;
+    /* Añade bordes redondeados */
+}
+
+.reservation-form input[type="submit"]:hover {
+    background-color: #E3B23C;
+}
+
+/* Estilos adicionales */
+.persona {
+    margin-top: 20px;
+    padding: 25px;
+    background-color: #BBB8B2;
+    color: #2E2E3A;
+    border-radius: 15px;
+    /* Añade bordes redondeados */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    /* Añade una sombra */
+}
+
+.persona label {
+    margin-top: 10px;
+    display: block;
+}
+
+.persona input[type="text"],
+.persona input[type="email"],
+.persona select {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid #2E2E3A;
+    border-radius: 5px;
+    /* Añade bordes redondeados */
+}
+
+.persona input[type="text"]:focus,
+.persona input[type="email"]:focus,
+.persona select:focus {
+    outline: none;
+    border-color: #F34213;
+}
+.popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(46, 45, 45, 0.8);
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 16px;
+    z-index: 9999;
+  }
+  input[type="checkbox"] + label:after {
+    left: 5px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid #FFFFFF; /* Color de la marca */
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+

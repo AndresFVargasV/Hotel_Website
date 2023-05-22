@@ -4,8 +4,78 @@
     <meta charset="UTF-8">
     <title>Prueba Hotel</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-dark"> 
-        <a href="/" class="navbar-brand">Hotel Horizonte Del Llano</a>
-    </nav>
+    <body>
+        <header>
+            <nav>
+                <ul>
+                    <li><a href="#">Inicio</a></li>
+                    <li><a href="#">Habitaciones</a></li>
+                    <li><a href="#">Servicios</a></li>
+                    <li><a href="#">Contacto</a></li>
+                </ul>
+            </nav>
+        </header>
+    
+        <section class="carousel">
+            <div class="slide">
+                <img src="1.png" alt="Imagen 1">
+            </div>
+            <div class="slide">
+                <img src="2.png" alt="Imagen 2">
+            </div>
+            <div class="slide">
+                <img src="3.png" alt="Imagen 3">
+            </div>
+            <div class="slide">
+                <img src="Horizonte del llano (1).png" alt="Imagen 4">
+            </div>
+        </section>
+        <script>
+            // JavaScript para el carrusel de imágenes
+            const slides = document.querySelectorAll('.slide');
+            let currentSlide = 0;
+    
+            function showSlide(n) {
+                slides[currentSlide].style.display = 'none';
+                currentSlide = (n + slides.length) % slides.length;
+                slides[currentSlide].style.display = 'block';
+            }
+    
+            function nextSlide() {
+                showSlide(currentSlide + 1);
+            }
+    
+            setInterval(nextSlide, 3000); // Cambiar de imagen cada 3 segundos
+        </script>
+        <section class="reservation-options">
+            <div class="reservation-option">
+                <div class="option-image personal" onmouseover="showDetails('personal')" onmouseout="hideDetails('personal')">
+                </div>
+                <h3>Reserva Personal</h3>
+                <div class="option-details personal" id="personal-details">
+                    <p>Mayor privacidad y calidad del servicio a un precio más alto.</p>
+                </div>
+            </div>
+            <div class="reservation-option">
+                <div class="option-image shared" onmouseover="showDetails('shared')" onmouseout="hideDetails('shared')"></div>
+                <h3>Reserva Compartida</h3>
+                <div class="option-details shared" id="shared-details">
+                    <p>Más económica pero con menor privacidad.</p>
+                </div>
+            </div>
+        </section>
+        <script>
+            function showDetails(option) {
+                const details = document.getElementById(`${option}-details`);
+                details.classList.add('show');
+            }
+    
+            function hideDetails(option) {
+                const details = document.getElementById(`${option}-details`);
+                details.classList.remove('show');
+            }
+        </script>
+    

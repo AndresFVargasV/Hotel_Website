@@ -47,8 +47,8 @@ async function addReservas(reservaCliente,id_habitacion) {
     request.input('fechaFin', sql.DateTime, reservaCliente.fechaFin);
     request.input('numPersonas', sql.Int, reservaCliente.numPersonas);
     request.input('desayuno', sql.Bit, reservaCliente.desayuno ? 1 : 0);
-    request.input('almuerzo', sql.Bit, reservaCliente.almuerzo ? 1 : 0);
-    request.input('cena', sql.Bit, reservaCliente.cena ? 1 : 0);
+    request.input('almuerzo', sql.Bit, reservaCliente.desayuno ? 1 : 0);
+    request.input('cena', sql.Bit, reservaCliente.desayuno ? 1 : 0);
     request.input('transporte', sql.Bit, reservaCliente.transporte ? 1 : 0);
     request.input('parqueadero', sql.Bit, reservaCliente.parqueadero ? 1 : 0);
     request.input('lavanderia', sql.Bit, reservaCliente.lavanderia ? 1 : 0);
@@ -77,7 +77,7 @@ router.post('/add-reservas', async (req, res) => {
     
     if(tipo==="ordinaria"){
     
-        const disponibilidad = await consultarCamasDisponibles(reservaCliente);
+        const disponibilidad = await consultarCamasDisponibles(reservaCliente,res);
         if (disponibilidad.recordset.length===0) {
           res.status(404).send(`No hay habitaciones disponibles en el rango de fechas seleccionadas`)
         } else {
@@ -92,7 +92,7 @@ router.post('/add-reservas', async (req, res) => {
 
     } else if (tipo==="compartida") {
         // Verificar si se acomodaron todas las personas
-        const reservacompartidas = await reservaHabitaciones(reservaCliente, await obtenerHabitacionesCompartidas(), reservaCliente.fechaInicio, reservaCliente.fechaFin);
+        const reservacompartidas = await reservaHabitaciones(reservaCliente, await obtenerHabitacionesCompartidas(), reservaCliente.fechaInicio, reservaCliente.fechaFin, req);
         if (reservacompartidas) {
           res.status(200).send(`Reserva realizada exitosamente codigo de reserva # ${reservacompartidas}`)
         } else {
@@ -112,7 +112,7 @@ router.post('/add-reservas', async (req, res) => {
 
 
 // Función para consultar camas disponibles si el tipo de habitación es ordinaria
-async function consultarCamasDisponibles(reservaCliente) {
+async function consultarCamasDisponibles(reservaCliente,res) {
     try {
 
       await sql.connect(config);
@@ -142,6 +142,7 @@ async function consultarCamasDisponibles(reservaCliente) {
       return result
     } catch (error) {
       console.error(error);
+      
       throw new Error('Error en la consulta de camas disponibles');
     }
   }  
@@ -149,7 +150,7 @@ async function consultarCamasDisponibles(reservaCliente) {
 
 
 //  Funcion para consultar si hay servicios disponibles en el rango de fechas seleccionadas
-async function reservarCupos(fechaInicio, fechaFin, tipoServicio) {
+async function reservarCupos(fechaInicio, fechaFin, tipoServicio,res) {
   try {
     await sql.connect(config);
 
@@ -168,6 +169,7 @@ async function reservarCupos(fechaInicio, fechaFin, tipoServicio) {
     const result = await request.query(query, { FechaInicio: fechaInicio, FechaFin: fechaFin });
 
     if (result.recordset.length === 0) {
+      
       throw new Error('No hay cupos disponibles para todas las fechas.');
     }
 
@@ -194,7 +196,7 @@ async function reservarCupos(fechaInicio, fechaFin, tipoServicio) {
 // Fin de la función consultar si hay servicios disponibles en el rango de fechas seleccionadas
 
 // Función para obtener los IDs de las habitaciones compartidas
-async function obtenerHabitacionesCompartidas() {
+async function obtenerHabitacionesCompartidas(res) {
   try {
     // Conectarse a la base de datos
     await sql.connect(config);
@@ -223,11 +225,32 @@ async function obtenerHabitacionesCompartidas() {
 }
 // Fin de la función para obtener los IDs de las habitaciones compartidas
 
+async function revertirInsert(codigoReserva,res) {
+  try {
+      await sql.connect(config);
+
+      // Realizar la lógica para revertir el insert en la base de datos
+      const query = `
+      DELETE FROM reserva_compartida
+      WHERE  codigo_reserva = '${codigoReserva}';
+    `;
+
+      const pool = await sql.connect(config);
+      const request = pool.request();
+
+      await request.query(query);
+      await sql.close();
+  } catch (error) {
+      console.error('Error al revertir insert:', error);
+      throw error;
+    }
+}
 
 // Funcion para reservar habitaciones compartidas
-async function reservaHabitaciones(reservaCliente, idsHabitaciones, fechaInicio, fechaFin) {
+async function reservaHabitaciones(reservaCliente, idsHabitaciones, fechaInicio, fechaFin, res) {
   try {
 
+    const codigoReserva = await generarValorUnico();
     await sql.connect(config);
     let habitacionReservada = null;
     let reservo = 0;
@@ -235,7 +258,7 @@ async function reservaHabitaciones(reservaCliente, idsHabitaciones, fechaInicio,
     let personas = reservaCliente.numPersonas
 
     for (const idHabitacion of idsHabitaciones) {
-      let fin = personas-acomododar;
+      let fin = personas - acomododar;
       for (let i = 0; i < fin; i++) {
 
         const query = `
@@ -259,19 +282,21 @@ async function reservaHabitaciones(reservaCliente, idsHabitaciones, fechaInicio,
 
         const result = await request.query(query);
 
+
+
         await sql.close();
 
         const totalReservas = result.recordset[0].total_reservas;
 
         console.log('Total de reservas:', totalReservas);
-        if (totalReservas < 4 && !(acomododar === personas)) {
-          
-          insertarReservaCompartida(reservaCliente, idHabitacion)
+        if (totalReservas <= 5 && !(acomododar == personas)) {
 
- 
-          acomododar ++;
+          await insertarReservaCompartida(reservaCliente, idHabitacion, codigoReserva, res)
 
-          habitacionReservada = idHabitacion;
+
+          acomododar++;
+
+          habitacionReservada = codigoReserva;
 
         } else {
           break;
@@ -279,7 +304,14 @@ async function reservaHabitaciones(reservaCliente, idsHabitaciones, fechaInicio,
       }
     }
 
-    
+    if (acomododar == personas) {
+      return codigoReserva;
+
+    } else {
+      revertirInsert(codigoReserva);
+      return null;
+    }
+
     return habitacionReservada;
   } catch (error) {
     console.error('Error al reservar habitación:', error);
@@ -291,10 +323,10 @@ async function reservaHabitaciones(reservaCliente, idsHabitaciones, fechaInicio,
 
 
 // Función para insertar una nueva reserva compartida
-async function insertarReservaCompartida(reservaCliente, idHabitacion) {
+async function insertarReservaCompartida(reservaCliente, idHabitacion, codigoReserva,res) {
   try {
     // Generar un valor único para el código de reserva
-    const codigoReserva = await generarValorUnico();
+
 
     // Conectarse a la base de datos
     await sql.connect(config);
@@ -330,7 +362,7 @@ async function insertarReservaCompartida(reservaCliente, idHabitacion) {
     // Ejecutar la consulta
     await request.query(query);
 
-    console.log('Reserva compartida insertada correctamente y el id es: ', idHabitacion);
+    console.log('Reserva compartida insertada correctamente y el id es: ', codigoReserva);
 
 
     // Cerrar la conexión a la base de datos

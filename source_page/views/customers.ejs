@@ -1,94 +1,136 @@
 <%- include('partials/_headers') %>
 
-<div class="container">
-    <div class="row">
-        <div class="col-md-7">
-            
-        </div>
-        <div class="col-md-10">
-            <h2>Formulario de reserva</h2>
-            <form action="/add-reservas" method="post">
+<section class="reservation-form">
+  <h2>Reserva tu habitación</h2>
+  <form action="/add-reservas" method="post">
+    <label for="fecha-ida">Fecha de ida:</label>
+    <input type="date" id="fecha-ida" name="fecha-ida" required>
 
-                
-                <div>
-                  <label for="docCliente">Documento del cliente:</label>
-                  <input type="text" id="docCliente" name="docCliente" required>
-                </div>
+    <label for="fecha-regreso">Fecha de regreso:</label>
+    <input type="date" id="fecha-regreso" name="fecha-regreso" required>
 
-                <label for="Tipo">Tipo de habitación</label>
+    <label for="numero-camas">Número de camas:</label>
+    <input type="number" id="numero-camas" name="numero-camas" required>
 
-                <select name="tipo" id="tipo">
-                    <option value="compartida">Compartida</option>
-                    <option value="ordinaria">Ordinaria</option>
-                </select>
-
-                <label for="acomodacion">Acomodacion de las camas</label>
-                <select name="acomodacion" id="acomodacion">
-                    <option value="cama sencilla">Sencilla</option>
-                    <option value="cama king">Cama King</option>
-                </select>
-                
-                <div>
-                  <label for="fechaInicio">Fecha de inicio:</label>
-                  <input type="date" id="fechaInicio" name="fechaInicio" required>
-                </div>
-                
-                <div>
-                  <label for="fechaFin">Fecha de fin:</label>
-                  <input type="date" id="fechaFin" name="fechaFin" required>
-                </div>
-                
-                <div>
-                  <label for="numPersonas">Número de personas:</label>
-                  <input type="number" id="numPersonas" name="numPersonas" required>
-                </div>
-                
-                <div>
-                  <label for="desayuno">Desayuno:</label>
-                  <input type="checkbox" id="desayuno" name="desayuno">
-                </div>
-                
-                <div>
-                  <label for="almuerzo">Almuerzo:</label>
-                  <input type="checkbox" id="almuerzo" name="almuerzo">
-                </div>
-                
-                <div>
-                  <label for="cena">Cena:</label>
-                  <input type="checkbox" id="cena" name="cena">
-                </div>
-                
-                <div>
-                  <label for="transporte">Transporte:</label>
-                  <input type="checkbox" id="transporte" name="transporte">
-                </div>
-                
-                <div>
-                  <label for="parqueadero">Parqueadero:</label>
-                  <input type="checkbox" id="parqueadero" name="parqueadero">
-                </div>
-                
-                <div>
-                  <label for="lavanderia">Lavandería:</label>
-                  <input type="checkbox" id="lavanderia" name="lavanderia">
-                </div>
-
-                <div>
-                  <label for="guia">Guia:</label>
-                  <input type="checkbox" id="guia" name="guia">
-                </div>
-                
-                <div>
-                  <label for="descripcion">Descripción:</label>
-                  <textarea id="descripcion" name="descripcion"></textarea>
-                </div>
-                
-                <button type="submit" class="btn btn-primary">Guardar</button>
-              </form>
-              
-        </div>
+    <label for="habitacion-compartida">Habitación compartida:</label>
+    <select id="tipo" onchange="toggleAccommodationOptions()" name="habitacion-compartida">
+      <option value="compartida">Compartida</option>
+      <option value="ordinaria">Ordinaria</option>
+    </select>
+    <div id="accommodation-options" style="display: none;">
+      <label for="accommodation-type">Tipo de Acomodación:</label>
+      <select id="accommodation-type">
+        <option value="double">Doble</option>
+        <option value="single">Simple</option>
+        <option value="king">King</option>
+      </select>
     </div>
-</div>
+    <input type="submit" value=" Consultar Reserva">
+    <label for="numero-personas">Número de personas:</label>
+    <input type="number" id="numero-personas" name="numero-personas" min="1" required>
+
+    <div id="personas-container"></div>
+
+    <input type="submit" value="Reservar">
+  </form>
+</section>
+<script>
+  // Inicializar el campo de fecha de ida
+  const fechaIdaInput = document.getElementById("fecha-ida");
+  const fechaRegresoInput = document.getElementById("fecha-regreso");
+
+  const fechaIdaPicker = flatpickr(fechaIdaInput, {
+    minDate: "today", // Bloquear fechas anteriores a la fecha actual
+    onChange: function (selectedDates) {
+      if (selectedDates.length > 0) {
+        const selectedDate = selectedDates[0];
+        fechaRegresoPicker.set("minDate", selectedDate); // Establecer la fecha mínima para la fecha de regreso
+      }
+    },
+  });
+
+  // Inicializar el campo de fecha de regreso
+  const fechaRegresoPicker = flatpickr(fechaRegresoInput, {
+    minDate: "today", // Bloquear fechas anteriores a la fecha actual
+  });
+
+
+  function toggleAccommodationOptions() {
+    const sharedRoomSelect = document.getElementById("tipo");
+    const accommodationOptions = document.getElementById("accommodation-options");
+
+    if (sharedRoomSelect.value === "compartida") {
+      accommodationOptions.style.display = "none"; // Ocultar las opciones de acomodación
+    } else {
+      accommodationOptions.style.display = "block"; // Mostrar las opciones de acomodación
+    }
+  }
+</script>
+<script>
+  // JavaScript para agregar secciones de datos de persona dinámicamente
+  const personasContainer = document.getElementById('personas-container');
+  const numeroPersonasInput = document.getElementById('numero-personas');
+
+  function agregarDatosPersona() {
+    personasContainer.innerHTML = '';
+    const numeroPersonas = parseInt(numeroPersonasInput.value);
+
+    for (let i = 0; i < numeroPersonas; i++) {
+      const seccionPersona = document.createElement('div');
+      seccionPersona.classList.add('persona');
+
+      const numeroPersonaLabel = document.createElement('label');
+      numeroPersonaLabel.textContent = `Persona ${i + 1}:`;
+      const numeroPersonaInput = document.createElement('input');
+      numeroPersonaInput.type = 'hidden';
+      numeroPersonaInput.value = i + 1;
+
+      const nombreLabel = document.createElement('label');
+      nombreLabel.textContent = 'Nombre:';
+      const nombreInput = document.createElement('input');
+      nombreInput.type = 'text';
+      nombreInput.required = true;
+
+      const documentoLabel = document.createElement('label');
+      documentoLabel.textContent = 'Número de documento:';
+      const documentoInput = document.createElement('input');
+      documentoInput.type = 'text';
+      documentoInput.required = true;
+
+      const tipoDocumentoLabel = document.createElement('label');
+      tipoDocumentoLabel.textContent = 'Tipo de documento:';
+      const tipoDocumentoInput = document.createElement('select');
+      var c = document.createElement("option");
+      var opciones = ["Cedula de ciudadania", "NIT", "Pasaporte"];
+      opciones.forEach(function (valor) {
+        var opcion = document.createElement("option");
+        opcion.text = valor;
+        tipoDocumentoInput.options.add(opcion);
+      });
+
+      const correoLabel = document.createElement('label');
+      correoLabel.textContent = 'Correo electrónico:';
+      const correoInput = document.createElement('input');
+      correoInput.type = 'email';
+      correoInput.required = true;
+
+      seccionPersona.appendChild(numeroPersonaLabel);
+      seccionPersona.appendChild(numeroPersonaInput);
+      seccionPersona.appendChild(nombreLabel);
+      seccionPersona.appendChild(nombreInput);
+      seccionPersona.appendChild(documentoLabel);
+      seccionPersona.appendChild(documentoInput);
+      seccionPersona.appendChild(tipoDocumentoLabel);
+      seccionPersona.appendChild(tipoDocumentoInput);
+      seccionPersona.appendChild(correoLabel);
+      seccionPersona.appendChild(correoInput);
+
+      personasContainer.appendChild(seccionPersona);
+    }
+  }
+
+  numeroPersonasInput.addEventListener('input', agregarDatosPersona);
+</script>
   
 
 <%- include('partials/_footer') %>
