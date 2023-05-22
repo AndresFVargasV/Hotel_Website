@@ -14,19 +14,19 @@ router.get('/add-reservas', async (req, res) => {
 async function generarValorUnico() {
   const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let valorUnico = '';
-  
+
   for (let i = 0; i < 10; i++) {
     const indice = Math.floor(Math.random() * caracteres.length);
     valorUnico += caracteres.charAt(indice);
   }
-  
+
   return valorUnico;
 }
 // Fin función para generar valor unico para el codigo de reserva
 
 
 // Función para hacer una reserva
-async function addReservas(reservaCliente,id_habitacion) {
+async function addReservas(reservaCliente, id_habitacion) {
   try {
 
     // Insertar la reserva en la base de datos
@@ -39,7 +39,7 @@ async function addReservas(reservaCliente,id_habitacion) {
     `;
     const pool = await sql.connect(config);
     const request = pool.request();
-    const codigo= await generarValorUnico();
+    const codigo = await generarValorUnico();
     request.input('codigoReserva', sql.VarChar(100), codigo);
     request.input('idHabitacion', sql.Int, id_habitacion);
     request.input('idCliente', sql.VarChar(50), reservaCliente.docCliente);
@@ -55,7 +55,7 @@ async function addReservas(reservaCliente,id_habitacion) {
     request.input('guia', sql.Bit, reservaCliente.guia ? 1 : 0);
     request.input('descripcion', sql.Text, reservaCliente.descripcion);
     await request.query(query);
-    
+
     //console.log('Reserva realizada exitosamente.');
 
     return codigo
@@ -74,32 +74,67 @@ router.post('/add-reservas', async (req, res) => {
     console.log(req.body);
     const reservaCliente = req.body;
     const tipo = req.body.tipo;
-    
-    if(tipo==="ordinaria"){
-    
-        const disponibilidad = await consultarCamasDisponibles(reservaCliente,res);
-        if (disponibilidad.recordset.length===0) {
-          res.status(404).send(`No hay habitaciones disponibles en el rango de fechas seleccionadas`)
-        } else {
-          const id = disponibilidad.recordset[0].id;
-          console.log('Valido')
-          const result = await addReservas(req.body,id);
 
-          if (result){
-            res.status(200).send(`Reserva realizada exitosamente codigo de reserva # ${result}`)
-          }
+    if (tipo === "ordinaria") {
+
+      const disponibilidad = await consultarCamasDisponibles(reservaCliente, res);
+      const paro = await validarParo(reservaCliente);
+
+      if (disponibilidad.recordset.length === 0 || !(paro.recordset.length === 0)) {
+        res.status(404).send(`No hay habitaciones disponibles en el rango de fechas seleccionadas`)
+      } else {
+
+        const id = disponibilidad.recordset[0].id;
+        const result = await addReservas(req.body, id);
+
+        if (reservaCliente.desayuno) {
+          await reservarCupos(reservaCliente.fechaInicio, reservaCliente.fechaFin, "Desayuno", res);
+        } 
+        if (reservaCliente.transporte) {
+          await reservarCupos(reservaCliente.fechaInicio, reservaCliente.fechaFin, "Transporte", res);
+        } 
+        if (reservaCliente.parqueadero) {
+          await reservarCupos(reservaCliente.fechaInicio, reservaCliente.fechaFin, "Parqueadero", res);
+        } 
+        if (reservaCliente.lavanderia) {
+          await reservarCupos(reservaCliente.fechaInicio, reservaCliente.fechaFin, "Lavanderia", res);
+        } 
+         if (reservaCliente.guia) {
+          await reservarCupos(reservaCliente.fechaInicio, reservaCliente.fechaFin, "guia", res);
         }
 
-    } else if (tipo==="compartida") {
-        // Verificar si se acomodaron todas las personas
-        const reservacompartidas = await reservaHabitaciones(reservaCliente, await obtenerHabitacionesCompartidas(), reservaCliente.fechaInicio, reservaCliente.fechaFin, req);
-        if (reservacompartidas) {
-          res.status(200).send(`Reserva realizada exitosamente codigo de reserva # ${reservacompartidas}`)
-        } else {
-          res.status(400).send('No se pueden acomodar a todas las personas en habitaciones compartidas');
-        }   
+        if (result) {
+          res.status(200).send(`Reserva realizada exitosamente codigo de reserva # ${result}`)
+        }
+      }
+
+    } else if (tipo === "compartida" || !(paro.recordset.length === 0)) {
+      // Verificar si se acomodaron todas las personas
+      if (reservaCliente.desayuno) {
+        await reservarCupos(reservaCliente.fechaInicio, reservaCliente.fechaFin, "Desayuno", res);
+      } 
+      if (reservaCliente.transporte) {
+        await reservarCupos(reservaCliente.fechaInicio, reservaCliente.fechaFin, "Transporte", res);
+      } 
+      if (reservaCliente.parqueadero) {
+        await reservarCupos(reservaCliente.fechaInicio, reservaCliente.fechaFin, "Parqueadero", res);
+      } 
+      if (reservaCliente.lavanderia) {
+        await reservarCupos(reservaCliente.fechaInicio, reservaCliente.fechaFin, "Lavanderia", res);
+      } 
+       if (reservaCliente.guia) {
+        await reservarCupos(reservaCliente.fechaInicio, reservaCliente.fechaFin, "guia", res);
+      }
+
+      const reservacompartidas = await reservaHabitaciones(reservaCliente, await obtenerHabitacionesCompartidas(), reservaCliente.fechaInicio, reservaCliente.fechaFin, req);
+
+      if (reservacompartidas) {
+        res.status(200).send(`Reserva realizada exitosamente codigo de reserva # ${reservacompartidas}`)
+      } else {
+        res.status(400).send('No se pueden acomodar a todas las personas en habitaciones compartidas');
+      }
     }
-    
+
     //res.json(result);
   } catch (error) {
     console.error(error);
@@ -112,12 +147,12 @@ router.post('/add-reservas', async (req, res) => {
 
 
 // Función para consultar camas disponibles si el tipo de habitación es ordinaria
-async function consultarCamasDisponibles(reservaCliente,res) {
-    try {
+async function consultarCamasDisponibles(reservaCliente, res) {
+  try {
 
-      await sql.connect(config);
-  
-      const query = `
+    await sql.connect(config);
+
+    const query = `
         SELECT top 1 h.id, h.numero_habitacion, h.tipo, h.acomodacion, h.camas_disponibles, h.price, h.descripcion
         FROM habitaciones h
         WHERE h.tipo = 'ordinaria' 
@@ -127,38 +162,40 @@ async function consultarCamasDisponibles(reservaCliente,res) {
         FROM reservas r
         WHERE (r.fecha_inicio <= @fechaFin AND r.fecha_fin >= @fechaInicio)
         )`;
-        
-      const pool = await sql.connect(config);
-      const request = pool.request();
 
-      request.input('tipoCama', sql.VarChar(50), reservaCliente.acomodacion);
-      request.input('fechaInicio', sql.DateTime, reservaCliente.fechaInicio);
-      request.input('fechaFin', sql.DateTime, reservaCliente.fechaFin);
-  
-      const result = await request.query(query);
+    const pool = await sql.connect(config);
+    const request = pool.request();
 
-      await sql.close();
-      
-      return result
-    } catch (error) {
-      console.error(error);
-      
-      throw new Error('Error en la consulta de camas disponibles');
-    }
-  }  
+    request.input('tipoCama', sql.VarChar(50), reservaCliente.acomodacion);
+    request.input('fechaInicio', sql.DateTime, reservaCliente.fechaInicio);
+    request.input('fechaFin', sql.DateTime, reservaCliente.fechaFin);
+
+    const result = await request.query(query);
+
+    await sql.close();
+
+    return result
+  } catch (error) {
+    console.error(error);
+
+    throw new Error('Error en la consulta de camas disponibles');
+  }
+}
 // Fin de la función consultar camas disponibles si el tipo de habitación es ordinaria
 
 
 //  Funcion para consultar si hay servicios disponibles en el rango de fechas seleccionadas
-async function reservarCupos(fechaInicio, fechaFin, tipoServicio,res) {
+async function reservarCupos(fechaInicio, fechaFin, tipoServicio, res) {
   try {
     await sql.connect(config);
 
-    const transaction = new sql.Transaction();
-    await transaction.begin();
+    const pool = await sql.connect(config);
+    const request = pool.request();
 
-    const request = new sql.Request(transaction);
-    
+    // Convertir las fechas a objetos Date
+    const fechaInicioObj = new Date(fechaInicio);
+    const fechaFinObj = new Date(fechaFin);
+
     // Verificar si hay cupos disponibles para todas las fechas
     const query = `
       SELECT 1
@@ -166,34 +203,46 @@ async function reservarCupos(fechaInicio, fechaFin, tipoServicio,res) {
       WHERE Fecha >= @FechaInicio AND Fecha <= @FechaFin
       AND [${tipoServicio}] > 0
     `;
-    const result = await request.query(query, { FechaInicio: fechaInicio, FechaFin: fechaFin });
+    request.input('FechaInicio', sql.DateTime, fechaInicioObj);
+    request.input('FechaFin', sql.DateTime, fechaFinObj);
 
-    if (result.recordset.length === 0) {
-      
-      throw new Error('No hay cupos disponibles para todas las fechas.');
+    const result = await request.query(query);
+
+    const diferenciaMs = fechaFinObj - fechaInicioObj;
+
+    // Convertir la diferencia a días
+    const dias = Math.floor(diferenciaMs / (1000 * 60 * 60 * 24));
+    console.log('Diferencia en días:', dias);
+
+    if (!(result.recordset.length === dias+1)) {
+      res.status(300).send(`No hay cupos disponibles para todas las fechas en: ${tipoServicio}`);
+      return; // Detener la ejecución de la función
     }
 
     // Actualizar los cupos disponibles para cada fecha
     const updateQuery = `
       UPDATE CuposDisponibles
       SET [${tipoServicio}] = [${tipoServicio}] - 1
-      WHERE Fecha >= @FechaInicio AND Fecha <= @FechaFin
+      WHERE Fecha >= @FechaInicioInput AND Fecha <= @FechaFinInput
       AND [${tipoServicio}] > 0
     `;
-    await request.query(updateQuery, { FechaInicio: fechaInicio, FechaFin: fechaFin });
 
-    await transaction.commit();
+    request.input('FechaInicioInput', sql.DateTime, fechaInicioObj);
+    request.input('FechaFinInput', sql.DateTime, fechaFinObj);
+
+    const result1 = await request.query(updateQuery);
+
     console.log('Reserva exitosa.');
+    return result1;
   } catch (error) {
-    if (transaction) {
-      await transaction.rollback();
-    }
     console.error('No se pudo realizar la reserva:', error.message);
   } finally {
-    sql.close();
+    await sql.close();
   }
 }
+
 // Fin de la función consultar si hay servicios disponibles en el rango de fechas seleccionadas
+
 
 // Función para obtener los IDs de las habitaciones compartidas
 async function obtenerHabitacionesCompartidas(res) {
@@ -225,25 +274,25 @@ async function obtenerHabitacionesCompartidas(res) {
 }
 // Fin de la función para obtener los IDs de las habitaciones compartidas
 
-async function revertirInsert(codigoReserva,res) {
+async function revertirInsert(codigoReserva, res) {
   try {
-      await sql.connect(config);
+    await sql.connect(config);
 
-      // Realizar la lógica para revertir el insert en la base de datos
-      const query = `
+    // Realizar la lógica para revertir el insert en la base de datos
+    const query = `
       DELETE FROM reserva_compartida
       WHERE  codigo_reserva = '${codigoReserva}';
     `;
 
-      const pool = await sql.connect(config);
-      const request = pool.request();
+    const pool = await sql.connect(config);
+    const request = pool.request();
 
-      await request.query(query);
-      await sql.close();
+    await request.query(query);
+    await sql.close();
   } catch (error) {
-      console.error('Error al revertir insert:', error);
-      throw error;
-    }
+    console.error('Error al revertir insert:', error);
+    throw error;
+  }
 }
 
 // Funcion para reservar habitaciones compartidas
@@ -323,7 +372,7 @@ async function reservaHabitaciones(reservaCliente, idsHabitaciones, fechaInicio,
 
 
 // Función para insertar una nueva reserva compartida
-async function insertarReservaCompartida(reservaCliente, idHabitacion, codigoReserva,res) {
+async function insertarReservaCompartida(reservaCliente, idHabitacion, codigoReserva, res) {
   try {
     // Generar un valor único para el código de reserva
 
@@ -374,6 +423,37 @@ async function insertarReservaCompartida(reservaCliente, idHabitacion, codigoRes
 }
 // Fin de la función para insertar una nueva reserva compartida
 
+
+
+// Funcion para validar fechas inactivas
+async function validarParo(reservaCliente) {
+  try {
+    await sql.connect(config);
+
+    // Crear una instancia de solicitud de consulta
+    const pool = await sql.connect(config);
+    const request = pool.request();
+
+    const query = `
+      SELECT *
+      FROM fechas_inactivas
+      WHERE fecha_inicio <= @FechaFin
+      AND fecha_fin >= @FechaInicio;
+    `;
+
+    request.input('fechaInicio', sql.DateTime, reservaCliente.fechaInicio);
+    request.input('fechaFin', sql.DateTime, reservaCliente.fechaFin);
+
+    const paro = await request.query(query);
+
+    return paro;
+  } catch (error) {
+    console.error('Error al consultar en la BD:', error);
+    throw error;
+  }
+}
+
+// Fin funcion de validacion de fechas inactivas
 
 // Exportamos este modulo para usarlo en app.js
 module.exports = router;
